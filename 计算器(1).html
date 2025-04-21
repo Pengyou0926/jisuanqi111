@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>段位升级价格计算器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部部分 */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* 中部 - 段位选择 */
+        .segments {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .segment-container {
+            width: 45%;
+        }
+        /* 添加竖线分隔 */
+        .divider {
+            border-left: 2px solid #ddd;
+            height: 100%;
+            margin: 0 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: #555;
+        }
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            background-color: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+        select:focus, button:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+        }
+
+        /* 底部部分 */
+        .footer {
+            text-align: center;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 30px;
+            background-color: #eaf4ff;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #cce5ff;
+            display: inline-block;
+            text-align: center; /* 结果文本居中 */
+        }
+
+        .author {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #888;
+            opacity: 0.6;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>段位升级价格计算器</h1>
+            <p>请选择当前段位和目标段位，点击计算即可获得价格。</p>
+        </div>
+
+        <!-- 中部：段位选择 -->
+        <div class="segments">
+            <!-- 当前段位选择 -->
+            <div class="segment-container">
+                <label for="current-main-segment">当前大段位:</label>
+                <select id="current-main-segment" onchange="updateCurrentSubSegments()">
+                    <!-- 一级菜单选项由 JavaScript 动态生成 -->
+                </select>
+
+                <label for="current-sub-segment">当前小段位:</label>
+                <select id="current-sub-segment">
+                    <!-- 二级菜单选项由 JavaScript 动态生成 -->
+                </select>
+            </div>
+
+            <!-- 竖线分隔 -->
+            <div class="divider"></div>
+
+            <!-- 目标段位选择 -->
+            <div class="segment-container">
+                <label for="target-main-segment">目标大段位:</label>
+                <select id="target-main-segment" onchange="updateTargetSubSegments()">
+                    <!-- 一级菜单选项由 JavaScript 动态生成 -->
+                </select>
+
+                <label for="target-sub-segment">目标小段位:</label>
+                <select id="target-sub-segment">
+                    <!-- 二级菜单选项由 JavaScript 动态生成 -->
+                </select>
+            </div>
+        </div>
+
+        <!-- 底部：计算按钮 -->
+        <div class="footer">
+            <button onclick="calculatePrice()">计算价格</button>
+        </div>
+
+        <!-- 结果展示 -->
+        <div class="result" id="result"></div>
+    </div>
+
+    <!-- 作者信息 -->
+    <div class="author">作者：小彭</div>
+
+    <script>
+        // 定义段位顺序和价格表
+        const segmentOrder = [
+            "黑铁1", "黑铁2", "黑铁3",
+            "青铜1", "青铜2", "青铜3",
+            "白银1", "白银2", "白银3",
+            "黄金1", "黄金2", "黄金3",
+            "铂金1", "铂金2", "铂金3",
+            "钻石1", "钻石2", "钻石3",
+            "超凡1", "超凡2", "超凡3",
+            "神话1", "神话2", "神话3"
+        ];
+
+        const priceTable = {
+            "黑铁1-黑铁2": 12, "黑铁2-黑铁3": 12, "黑铁3-青铜1": 12,
+            "青铜1-青铜2": 15, "青铜2-青铜3": 15, "青铜3-白银1": 15,
+            "白银1-白银2": 20, "白银2-白银3": 20, "白银3-黄金1": 20,
+            "黄金1-黄金2": 35, "黄金2-黄金3": 35, "黄金3-铂金1": 35,
+            "铂金1-铂金2": 45, "铂金2-铂金3": 45, "铂金3-钻石1": 45,
+            "钻石1-钻石2": 60, "钻石2-钻石3": 80, "钻石3-超凡1": 120,
+            "超凡1-超凡2": 160, "超凡2-超凡3": 220, "超凡3-神话1": 300,
+            "神话1-神话2": 400, "神话2-神话3": 600, 
+        };
+
+        // 定义大段位和小段位的映射
+        const mainSegments = {
+            "黑铁": ["黑铁1", "黑铁2", "黑铁3"],
+            "青铜": ["青铜1", "青铜2", "青铜3"],
+            "白银": ["白银1", "白银2", "白银3"],
+            "黄金": ["黄金1", "黄金2", "黄金3"],
+            "铂金": ["铂金1", "铂金2", "铂金3"],
+            "钻石": ["钻石1", "钻石2", "钻石3"],
+            "超凡": ["超凡1", "超凡2", "超凡3"],
+            "神话": ["神话1", "神话2", "神话3"]
+        };
+
+        // 动态生成一级菜单
+        const currentMainSegmentSelect = document.getElementById("current-main-segment");
+        const targetMainSegmentSelect = document.getElementById("target-main-segment");
+
+        Object.keys(mainSegments).forEach(mainSegment => {
+            const option1 = document.createElement("option");
+            option1.value = mainSegment;
+            option1.textContent = mainSegment;
+            currentMainSegmentSelect.appendChild(option1);
+
+            const option2 = document.createElement("option");
+            option2.value = mainSegment;
+            option2.textContent = mainSegment;
+            targetMainSegmentSelect.appendChild(option2);
+        });
+
+        // 更新当前小段位选项
+        function updateCurrentSubSegments() {
+            const currentMainSegment = currentMainSegmentSelect.value;
+            const currentSubSegmentSelect = document.getElementById("current-sub-segment");
+            updateSubSegments(currentMainSegment, currentSubSegmentSelect);
+        }
+
+        // 更新目标小段位选项
+        function updateTargetSubSegments() {
+            const targetMainSegment = targetMainSegmentSelect.value;
+            const targetSubSegmentSelect = document.getElementById("target-sub-segment");
+            updateSubSegments(targetMainSegment, targetSubSegmentSelect);
+        }
+
+        // 更新小段位选项
+        function updateSubSegments(mainSegment, subSegmentSelect) {
+            subSegmentSelect.innerHTML = "";
+            mainSegments[mainSegment].forEach(subSegment => {
+                const option = document.createElement("option");
+                option.value = subSegment;
+                option.textContent = subSegment;
+                subSegmentSelect.appendChild(option);
+            });
+        }
+
+        // 初始化小段位选项
+        updateCurrentSubSegments();
+        updateTargetSubSegments();
+
+        // 计算价格函数
+        function calculatePrice() {
+            const currentSubSegment = document.getElementById("current-sub-segment").value;
+            const targetSubSegment = document.getElementById("target-sub-segment").value;
+
+            const currentIndex = segmentOrder.indexOf(currentSubSegment);
+            const targetIndex = segmentOrder.indexOf(targetSubSegment);
+
+            if (currentIndex === -1 || targetIndex === -1) {
+                alert("请选择有效的段位！");
+                return;
+            }
+
+            if (currentIndex >= targetIndex) {
+                alert("目标段位必须高于当前段位！");
+                return;
+            }
+
+            let totalPrice = 0;
+            for (let i = currentIndex; i < targetIndex; i++) {
+                const key = `${segmentOrder[i]}-${segmentOrder[i + 1]}`;
+                if (priceTable[key]) {
+                    totalPrice += priceTable[key];
+                } else {
+                    alert(`无法找到 ${key} 的价格，请检查数据！`);
+                    return;
+                }
+            }
+
+            document.getElementById("result").textContent = `总价格: ${totalPrice} 元`;
+        }
+    </script>
+</body>
+</html>
